@@ -1,6 +1,6 @@
 {
-  "name": "NeuroLumen",
-  "short_name": "NeuroLumen",
+  "name": "CathHub",
+  "short_name": "CathHub",
   "description": "Catheter Compatibility Tool for Interventional Neuroradiology",
   "start_url": "/",
   "display": "standalone",

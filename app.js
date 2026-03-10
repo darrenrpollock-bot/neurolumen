@@ -1,5 +1,5 @@
 /* ====================================================
-   NEUROLUMEN v2 — app.js
+   CATHHUB — app.js
    Premium Catheter Compatibility Tool for INR
    ==================================================== */
 

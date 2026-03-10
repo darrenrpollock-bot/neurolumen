@@ -1,9 +1,9 @@
 /* ====================================================
-   NEUROLUMEN v2 — sw.js
+   CATHHUB — sw.js
    Service Worker — offline-first PWA support
    ==================================================== */
 
-const CACHE_NAME = 'neurolumen-v2';
+const CACHE_NAME = 'cathhub-v1';
 
 const STATIC_ASSETS = [
   '/',
