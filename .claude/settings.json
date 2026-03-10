@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /Users/darrenpollock/NeuroLumen/neurolumen log --oneline)",
+      "Bash(git -C /Users/darrenpollock/NeuroLumen/neurolumen log --format=\"%H %s\")"
+    ]
+  }
+}
