@@ -1,15 +1,27 @@
 const data = {
   accessCatheters: [
-    { name: "Sophia 5",          company: "Balt",      fr: "5F",  odMm: 1.73, idMm: 1.40, idInch: 0.055 },
+    { name: "Sophia 5",          company: "Microvention", fr: "5F",  odMm: 1.73, idMm: 1.40, idInch: 0.055 },
     { name: "Neuron 070",        company: "Penumbra",  fr: "6F",  odMm: 1.98, idMm: 1.78, idInch: 0.070 },
-    { name: "Sophia 6",          company: "Balt",      fr: "6F",  odMm: 1.98, idMm: 1.78, idInch: 0.070 },
+    { name: "Sophia 6",          company: "Microvention", fr: "6F",  odMm: 1.98, idMm: 1.78, idInch: 0.070 },
     { name: "BENCHMARK 071",     company: "Penumbra",  fr: "6F",  odMm: 1.98, idMm: 1.80, idInch: 0.071 },
     { name: "Envoy DA",          company: "Codman",    fr: "6F",  odMm: 1.98, idMm: 1.80, idInch: 0.071 },
     { name: "AXS Infinity LS Plus", company: "Stryker", fr: "8F", odMm: 2.64, idMm: 2.31, idInch: 0.091 },
     { name: "Infinity ASX",      company: "Stryker",   fr: "8F",  odMm: 2.64, idMm: 2.23, idInch: 0.088 },
     { name: "Neuron MAX 088",    company: "Penumbra",  fr: "8F",  odMm: 2.64, idMm: 2.23, idInch: 0.088 },
     { name: "Balt Ballast",      company: "Balt",      fr: "8F",  odMm: 2.64, idMm: 2.23, idInch: 0.088 },
+    { name: "BENCHMARK BMX81",   company: "Penumbra",  fr: "7F",  odMm: 2.46, idMm: 2.06, idInch: 0.081 },
     { name: "BMX96",             company: "Microvention", fr: "8F", odMm: 2.64, idMm: 2.44, idInch: 0.096 },
+  ],
+
+  thrombectomyCatheters: [
+    { name: "RED 43",            company: "Penumbra",  proxOdMm: 1.52, distOdMm: 1.09, idMm: 1.09, idInch: 0.043 },
+  ],
+
+  dacCatheters: [
+    { name: "Phenom Plus",       company: "Medtronic", proxOdMm: 1.55, distOdMm: 1.40, idMm: 1.13, idInch: 0.045 },
+    { name: "MIDWAY 43",         company: "Penumbra",  proxOdMm: 1.52, distOdMm: null, idMm: 1.09, idInch: 0.043 },
+    { name: "AXS Vecta 46",      company: "Stryker",   proxOdMm: 1.48, distOdMm: 1.43, idMm: 1.17, idInch: 0.046 },
+    { name: "MIDWAY 62",         company: "Penumbra",  proxOdMm: 1.93, distOdMm: null, idMm: 1.57, idInch: 0.062 },
   ],
 
   microCatheters: [

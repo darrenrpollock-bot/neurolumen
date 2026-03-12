@@ -48,15 +48,26 @@ function populateSelects() {
     });
   });
 
-  // Microcatheter selects
+  // Inner catheter selects (micros + DACs + thrombectomy)
   const microSelects = ['micro-1', 'micro-2', 'micro-3', 'detail-micro'];
+  const innerGroups = [
+    { label: 'Microcatheters',         list: data.microCatheters },
+    { label: 'DAC Catheters',          list: data.dacCatheters },
+    { label: 'Thrombectomy Catheters', list: data.thrombectomyCatheters },
+  ];
   microSelects.forEach(id => {
     const el = document.getElementById(id);
-    data.microCatheters.forEach(c => {
-      const opt = document.createElement('option');
-      opt.value = c.name;
-      opt.textContent = `${c.name}  ·  OD ${c.proxOdMm.toFixed(2)} mm`;
-      el.appendChild(opt);
+    innerGroups.forEach(({ label, list }) => {
+      if (!list || !list.length) return;
+      const grp = document.createElement('optgroup');
+      grp.label = label;
+      list.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.name;
+        opt.textContent = `${c.name}  ·  OD ${c.proxOdMm.toFixed(2)} mm`;
+        grp.appendChild(opt);
+      });
+      el.appendChild(grp);
     });
   });
 }
@@ -86,7 +97,29 @@ function renderMicroTable() {
       <td><strong>${c.name}</strong></td>
       <td style="color:var(--muted)">${c.company}</td>
       <td><strong style="font-feature-settings:'tnum' 1">${c.proxOdMm.toFixed(2)}</strong></td>
-      <td style="color:var(--muted);font-feature-settings:'tnum' 1">${c.distOdMm.toFixed(2)}</td>
+      <td style="color:var(--muted);font-feature-settings:'tnum' 1">${c.distOdMm != null ? c.distOdMm.toFixed(2) : '—'}</td>
+      <td style="font-feature-settings:'tnum' 1">${c.idMm.toFixed(2)}</td>
+    </tr>
+  `).join('');
+}
+
+function renderDacTable() {
+  document.getElementById('dac-table-body').innerHTML = data.dacCatheters.map(c => `
+    <tr>
+      <td><strong>${c.name}</strong></td>
+      <td style="color:var(--muted)">${c.company}</td>
+      <td><strong style="font-feature-settings:'tnum' 1">${c.proxOdMm.toFixed(2)}</strong></td>
+      <td style="font-feature-settings:'tnum' 1">${c.idMm.toFixed(2)}</td>
+    </tr>
+  `).join('');
+}
+
+function renderThrombectomyTable() {
+  document.getElementById('thrombectomy-table-body').innerHTML = data.thrombectomyCatheters.map(c => `
+    <tr>
+      <td><strong>${c.name}</strong></td>
+      <td style="color:var(--muted)">${c.company}</td>
+      <td><strong style="font-feature-settings:'tnum' 1">${c.proxOdMm.toFixed(2)}</strong></td>
       <td style="font-feature-settings:'tnum' 1">${c.idMm.toFixed(2)}</td>
     </tr>
   `).join('');
@@ -122,7 +155,7 @@ function updateFastView() {
     const odEl    = document.getElementById(`slot-od-${n}`);
     const clearEl = document.getElementById(`slot-clear-${n}`);
     const micro   = select.value
-      ? data.microCatheters.find(c => c.name === select.value)
+      ? [...data.microCatheters, ...data.dacCatheters, ...data.thrombectomyCatheters].find(c => c.name === select.value)
       : null;
 
     if (micro) {
@@ -152,11 +185,12 @@ function updateFastView() {
     return;
   }
 
-  // Gather selected micros
+  // Gather selected inner catheters (micros + DACs + thrombectomy)
+  const allInner = [...data.microCatheters, ...data.dacCatheters, ...data.thrombectomyCatheters];
   const micros = [1, 2, 3]
     .map(n => document.getElementById(`micro-${n}`).value)
     .filter(Boolean)
-    .map(name => data.microCatheters.find(c => c.name === name))
+    .map(name => allInner.find(c => c.name === name))
     .filter(Boolean);
 
   const totalOd = micros.reduce((sum, m) => sum + m.proxOdMm, 0);
@@ -457,6 +491,8 @@ document.addEventListener('DOMContentLoaded', () => {
   populateSelects();
   renderAccessTable();
   renderMicroTable();
+  renderDacTable();
+  renderThrombectomyTable();
   updateFastView();
 });
 
