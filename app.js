@@ -377,7 +377,8 @@ function updateDetailView() {
   }
 
   const access = accessName ? data.accessCatheters.find(c => c.name === accessName) : null;
-  const micro  = microName  ? data.microCatheters.find(c => c.name === microName)   : null;
+  const allInner = [...data.microCatheters, ...data.dacCatheters, ...data.thrombectomyCatheters];
+  const micro  = microName  ? allInner.find(c => c.name === microName) : null;
 
   let html = '';
 
@@ -424,7 +425,7 @@ function updateDetailView() {
           </div>
           <div class="spec-cell">
             <div class="spec-label">Distal OD</div>
-            <div class="spec-val">${micro.distOdMm.toFixed(2)}<span class="spec-unit">mm</span></div>
+            <div class="spec-val">${micro.distOdMm != null ? micro.distOdMm.toFixed(2) : '—'}<span class="spec-unit">${micro.distOdMm != null ? 'mm' : ''}</span></div>
           </div>
           <div class="spec-cell">
             <div class="spec-label">Inner Diameter</div>
