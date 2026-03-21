@@ -36,14 +36,19 @@ function compatLabel(clearance) {
 
 /* ─── POPULATE SELECTS ───────────────────────────────────────────────────────── */
 function populateSelects() {
-  // Access catheter selects
+  // Access catheter selects (including balloon guide catheters as access-like)
   const accessSelects = ['detail-access'];
   accessSelects.forEach(id => {
     const el = document.getElementById(id);
-    data.accessCatheters.forEach(c => {
+    // Combine accessCatheters and balloonGuideCatheters for access-like selection
+    const combinedAccess = [
+      ...data.accessCatheters.map(c => ({ ...c, category: 'accessCatheters' })),
+      ...(data.balloonGuideCatheters || []).map(c => ({ ...c, category: 'balloonGuideCatheters' }))
+    ];
+    combinedAccess.forEach(c => {
       const opt = document.createElement('option');
-      opt.value = c.name;
-      opt.textContent = `${c.name}  ·  ID ${c.idMm.toFixed(2)} mm`;
+      opt.value = `${c.category}:${c.name}`;
+      opt.textContent = `${c.name}  ·  ID ${c.idMm ? c.idMm.toFixed(2) : (c.shaftOdMm || 0).toFixed(2)} mm`;
       el.appendChild(opt);
     });
   });
@@ -51,19 +56,19 @@ function populateSelects() {
   // Inner catheter selects (micros + DACs + thrombectomy)
   const microSelects = ['micro-1', 'micro-2', 'micro-3', 'detail-micro'];
   const innerGroups = [
-    { label: 'Microcatheters',         list: data.microCatheters },
-    { label: 'DAC Catheters',          list: data.dacCatheters },
-    { label: 'Thrombectomy Catheters', list: data.thrombectomyCatheters },
+    { label: 'Microcatheters',         list: data.microCatheters, key: 'microCatheters' },
+    { label: 'DAC Catheters',          list: data.dacCatheters, key: 'dacCatheters' },
+    { label: 'Thrombectomy Catheters', list: data.thrombectomyCatheters, key: 'thrombectomyCatheters' },
   ];
   microSelects.forEach(id => {
     const el = document.getElementById(id);
-    innerGroups.forEach(({ label, list }) => {
+    innerGroups.forEach(({ label, list, key }) => {
       if (!list || !list.length) return;
       const grp = document.createElement('optgroup');
       grp.label = label;
       list.forEach(c => {
         const opt = document.createElement('option');
-        opt.value = c.name;
+        opt.value = `${key}:${c.name}`;
         opt.textContent = `${c.name}  ·  OD ${c.proxOdMm.toFixed(2)} mm`;
         grp.appendChild(opt);
       });
@@ -85,8 +90,8 @@ function renderAccessTable() {
       <td><strong>${c.name}</strong></td>
       <td style="color:var(--muted)">${c.company}</td>
       <td>${c.fr}</td>
-      <td style="color:var(--muted);font-feature-settings:'tnum' 1">${c.odMm.toFixed(2)}</td>
-      <td><strong style="font-feature-settings:'tnum' 1">${c.idMm.toFixed(2)}</strong></td>
+      <td style="color:var(--muted);font-feature-settings:'tnum' 1">${c.odMm ? c.odMm.toFixed(2) : (c.proxOdMm || 0).toFixed(2)}</td>
+      <td><strong style="font-feature-settings:'tnum' 1">${c.idMm ? c.idMm.toFixed(2) : (c.shaftOdMm || 0).toFixed(2)}</strong></td>
     </tr>
   `).join('');
 }
@@ -125,6 +130,121 @@ function renderThrombectomyTable() {
   `).join('');
 }
 
+/* ─── DYNAMIC CATEGORY RENDERING ─────────────────────────────────────────────── */
+function renderAllCategories() {
+  const container = document.getElementById('tab-all');
+  container.innerHTML = ''; // Clear existing content
+
+  // Dynamically create sections for each category in data.js
+  Object.keys(data).forEach((categoryKey, index) => {
+    const categoryData = data[categoryKey];
+    if (!categoryData || !categoryData.length) return;
+
+    // Human-readable category name
+    let categoryLabel = categoryKey.replace(/([A-Z])/g, ' $1');
+    categoryLabel = categoryLabel.charAt(0).toUpperCase() + categoryLabel.slice(1);
+
+    // Create section
+    const section = document.createElement('div');
+    section.className = 'section';
+    section.style.marginTop = index === 0 ? '20px' : '30px';
+
+    // Section label
+    const sectionLabel = document.createElement('div');
+    sectionLabel.className = 'section-label';
+    sectionLabel.textContent = categoryLabel;
+    section.appendChild(sectionLabel);
+
+    // Result card with table
+    const resultCard = document.createElement('div');
+    resultCard.className = 'result-card';
+    resultCard.style.padding = '0';
+    resultCard.style.overflow = 'hidden';
+
+    const table = document.createElement('table');
+    table.className = 'access-table';
+
+    // Table headers based on category type
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    const headers = ['Device', 'Company'];
+
+    if (categoryKey === 'accessCatheters') {
+      headers.push('Fr', 'OD (mm)', 'ID (mm)');
+    } else if (categoryKey === 'balloonGuideCatheters') {
+      headers.push('Fr', 'Shaft OD (mm)', 'Balloon Max (mm)');
+    } else if (categoryKey === 'microCatheters') {
+      headers.push('Prox OD (mm)', 'Dist OD (mm)', 'ID (mm)');
+    } else {
+      headers.push('Prox OD (mm)', 'ID (mm)');
+    }
+
+    headers.forEach(h => {
+      const th = document.createElement('th');
+      th.textContent = h;
+      if (h.includes('OD') || h.includes('ID')) {
+        th.style.textAlign = 'center';
+      }
+      headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    // Table body
+    const tbody = document.createElement('tbody');
+    categoryData.forEach(item => {
+      const row = document.createElement('tr');
+      const cells = [
+        `<strong>${item.name}</strong><br><span style="color:var(--muted);font-size:11px">${item.company}</span>`,
+        item.company
+      ];
+
+      if (categoryKey === 'accessCatheters') {
+        cells.push(
+          item.fr || '—',
+          item.odMm ? item.odMm.toFixed(2) : (item.proxOdMm || 0).toFixed(2),
+          `<strong>${item.idMm ? item.idMm.toFixed(2) : (item.shaftOdMm || 0).toFixed(2)}</strong>`
+        );
+      } else if (categoryKey === 'balloonGuideCatheters') {
+        cells.push(
+          item.fr || '—',
+          item.shaftOdMm ? item.shaftOdMm.toFixed(2) : '—',
+          item.balloonMaxMm ? item.balloonMaxMm.toFixed(2) : '—'
+        );
+      } else if (categoryKey === 'microCatheters') {
+        cells.push(
+          `<strong>${item.proxOdMm.toFixed(2)}</strong>`,
+          item.distOdMm != null ? item.distOdMm.toFixed(2) : '—',
+          item.idMm.toFixed(2)
+        );
+      } else {
+        cells.push(
+          `<strong>${item.proxOdMm.toFixed(2)}</strong>`,
+          item.idMm.toFixed(2)
+        );
+      }
+
+      cells.forEach((c, i) => {
+        const td = document.createElement('td');
+        td.innerHTML = c;
+        if (i > 1) {
+          td.style.textAlign = 'center';
+          td.style.fontFeatureSettings = `'tnum' 1`;
+          if (i !== cells.length - 1 && categoryKey !== 'accessCatheters' && categoryKey !== 'balloonGuideCatheters') {
+            td.style.color = 'var(--muted)';
+          }
+        }
+        row.appendChild(td);
+      });
+      tbody.appendChild(row);
+    });
+    table.appendChild(tbody);
+    resultCard.appendChild(table);
+    section.appendChild(resultCard);
+    container.appendChild(section);
+  });
+}
+
 /* ─── TAB SWITCHING ──────────────────────────────────────────────────────────── */
 function switchTab(tab) {
   ['fast', 'detail', 'all'].forEach(t => {
@@ -154,8 +274,9 @@ function updateFastView() {
     const slot    = document.getElementById(`slot-${n}`);
     const odEl    = document.getElementById(`slot-od-${n}`);
     const clearEl = document.getElementById(`slot-clear-${n}`);
+    const [catKey, microName] = select.value.split(':');
     const micro   = select.value
-      ? [...data.microCatheters, ...data.dacCatheters, ...data.thrombectomyCatheters].find(c => c.name === select.value)
+      ? [...data.microCatheters, ...data.dacCatheters, ...data.thrombectomyCatheters].find(c => c.name === microName)
       : null;
 
     if (micro) {
@@ -188,17 +309,24 @@ function updateFastView() {
   // Gather selected inner catheters (micros + DACs + thrombectomy)
   const allInner = [...data.microCatheters, ...data.dacCatheters, ...data.thrombectomyCatheters];
   const micros = [1, 2, 3]
-    .map(n => document.getElementById(`micro-${n}`).value)
-    .filter(Boolean)
-    .map(name => allInner.find(c => c.name === name))
+    .map(n => {
+      const val = document.getElementById(`micro-${n}`).value;
+      if (!val) return null;
+      const [catKey, name] = val.split(':');
+      return allInner.find(c => c.name === name);
+    })
     .filter(Boolean);
 
   const totalOd = micros.reduce((sum, m) => sum + m.proxOdMm, 0);
 
-  // Calculate compatibility for all access catheters, sort best first
-  const results = data.accessCatheters.map(ac => ({
+  // Calculate compatibility for all access catheters (including balloon guide as access-like), sort best first
+  const combinedAccess = [
+    ...data.accessCatheters.map(c => ({ ...c, category: 'accessCatheters' })),
+    ...(data.balloonGuideCatheters || []).map(c => ({ ...c, category: 'balloonGuideCatheters', idMm: c.idMm || c.shaftOdMm })) // fallback to shaft if no ID
+  ];
+  const results = combinedAccess.map(ac => ({
     ...ac,
-    clearance: ac.idMm - totalOd
+    clearance: (ac.idMm || 0) - totalOd
   })).sort((a, b) => b.clearance - a.clearance);
 
   const greenCount = results.filter(r => r.clearance >= 0.10).length;
@@ -232,6 +360,8 @@ function updateFastView() {
   const FR_GROUPS = [
     { fr: '5F', label: '5 French' },
     { fr: '6F', label: '6 French' },
+    { fr: '6.6F', label: '6.6 French' },
+    { fr: '7F', label: '7 French' },
     { fr: '8F', label: '8 French' },
   ];
 
@@ -250,7 +380,7 @@ function updateFastView() {
           <strong>${r.name}</strong><br>
           <span style="color:var(--muted);font-size:11px">${r.company}</span>
         </td>
-        <td style="text-align:center;font-feature-settings:'tnum' 1">${r.idMm.toFixed(2)}</td>
+        <td style="text-align:center;font-feature-settings:'tnum' 1">${r.idMm ? r.idMm.toFixed(2) : (r.shaftOdMm || 0).toFixed(2)}</td>
         <td style="text-align:center">
           <span class="pill ${cls}">${sign}${r.clearance.toFixed(2)}</span>
         </td>
@@ -298,12 +428,12 @@ function renderLumenViz(access, micro) {
   // Scale: largest catheter OD = 2.64mm → radius 1.32mm → MAX_R px
   const SCALE   = MAX_R / 1.32;
 
-  const accessOdR = (access.odMm    / 2) * SCALE;
-  const accessIdR = (access.idMm    / 2) * SCALE;
+  const accessOdR = (access.odMm ? (access.odMm / 2) : (access.proxOdMm || access.shaftOdMm || 0) / 2) * SCALE;
+  const accessIdR = ((access.idMm || access.shaftOdMm || 0) / 2) * SCALE;
   const microR    = (micro.proxOdMm / 2) * SCALE;
-  const microIdR  = (micro.idMm     / 2) * SCALE;
+  const microIdR  = (micro.idMm / 2) * SCALE;
 
-  const clearance   = access.idMm - micro.proxOdMm;
+  const clearance   = (access.idMm || access.shaftOdMm || 0) - micro.proxOdMm;
   const cls         = compatClass(clearance);
   const gapColor    = cls === 'green' ? '#10b981' : cls === 'amber' ? '#f59e0b' : '#ef4444';
   const gapOpacity  = 0.18;
@@ -346,13 +476,13 @@ function renderLumenViz(access, micro) {
         <div class="dim-item">
           <span class="dim-swatch" style="border: 2px solid #0ea5e9; opacity: 0.4;"></span>
           <span class="dim-key">Access OD</span>
-          <span class="dim-val">${access.odMm.toFixed(2)}</span>
+          <span class="dim-val">${access.odMm ? access.odMm.toFixed(2) : (access.proxOdMm || access.shaftOdMm || 0).toFixed(2)}</span>
           <span class="dim-unit">mm</span>
         </div>
         <div class="dim-item">
           <span class="dim-swatch" style="border: 2px dashed #0ea5e9; opacity: 0.6;"></span>
           <span class="dim-key">Access ID</span>
-          <span class="dim-val">${access.idMm.toFixed(2)}</span>
+          <span class="dim-val">${access.idMm ? access.idMm.toFixed(2) : (access.shaftOdMm || 0).toFixed(2)}</span>
           <span class="dim-unit">mm</span>
         </div>
         <div class="dim-item">
@@ -367,18 +497,29 @@ function renderLumenViz(access, micro) {
 
 /* ─── DETAIL VIEW ────────────────────────────────────────────────────────────── */
 function updateDetailView() {
-  const accessName = document.getElementById('detail-access').value;
-  const microName  = document.getElementById('detail-micro').value;
+  const accessVal = document.getElementById('detail-access').value;
+  const microVal  = document.getElementById('detail-micro').value;
   const el = document.getElementById('detail-result');
 
-  if (!accessName && !microName) {
+  if (!accessVal && !microVal) {
     el.innerHTML = '';
     return;
   }
 
-  const access = accessName ? data.accessCatheters.find(c => c.name === accessName) : null;
+  const [accessCat, accessName] = accessVal ? accessVal.split(':') : ['', ''];
+  const [microCat, microName] = microVal ? microVal.split(':') : ['', ''];
+
+  // Handle both access and balloon guide as access-like
+  let access = null;
+  if (accessCat === 'accessCatheters') {
+    access = data.accessCatheters.find(c => c.name === accessName);
+  } else if (accessCat === 'balloonGuideCatheters') {
+    access = data.balloonGuideCatheters.find(c => c.name === accessName);
+    if (access && !access.idMm) access.idMm = access.shaftOdMm; // fallback if needed
+  }
+
   const allInner = [...data.microCatheters, ...data.dacCatheters, ...data.thrombectomyCatheters];
-  const micro  = microName  ? allInner.find(c => c.name === microName) : null;
+  const micro  = microName ? allInner.find(c => c.name === microName) : null;
 
   let html = '';
 
@@ -387,7 +528,7 @@ function updateDetailView() {
     html += renderLumenViz(access, micro);
   }
 
-  // Access catheter specs
+  // Access catheter specs (or balloon guide)
   if (access) {
     html += `
       <div class="section" style="margin-top:16px">
@@ -395,20 +536,21 @@ function updateDetailView() {
         <div class="spec-grid">
           <div class="spec-cell">
             <div class="spec-label">French Size</div>
-            <div class="spec-val">${access.fr}</div>
+            <div class="spec-val">${access.fr || '—'}</div>
           </div>
           <div class="spec-cell">
             <div class="spec-label">Outer Diameter</div>
-            <div class="spec-val">${access.odMm.toFixed(2)}<span class="spec-unit">mm</span></div>
+            <div class="spec-val">${access.odMm ? access.odMm.toFixed(2) : (access.proxOdMm || access.shaftOdMm || 0).toFixed(2)}<span class="spec-unit">mm</span></div>
           </div>
           <div class="spec-cell primary">
             <div class="spec-label">Inner Diameter</div>
-            <div class="spec-val">${access.idMm.toFixed(2)}<span class="spec-unit">mm</span></div>
+            <div class="spec-val">${access.idMm ? access.idMm.toFixed(2) : (access.shaftOdMm || 0).toFixed(2)}<span class="spec-unit">mm</span></div>
           </div>
           <div class="spec-cell">
             <div class="spec-label">ID (inch)</div>
-            <div class="spec-val">${access.idInch.toFixed(3)}<span class="spec-unit">in</span></div>
+            <div class="spec-val">${access.idInch ? access.idInch.toFixed(3) : (access.shaftOdInch || 0).toFixed(3)}<span class="spec-unit">in</span></div>
           </div>
+          ${access.notes ? `<div class="spec-cell full"><div class="spec-note">${access.notes}</div></div>` : ''}
         </div>
       </div>`;
   }
@@ -431,13 +573,14 @@ function updateDetailView() {
             <div class="spec-label">Inner Diameter</div>
             <div class="spec-val">${micro.idMm.toFixed(2)}<span class="spec-unit">mm</span></div>
           </div>
+          ${micro.notes ? `<div class="spec-cell full"><div class="spec-note">${micro.notes}</div></div>` : ''}
         </div>
       </div>`;
   }
 
   // Compatibility banner — only when both selected
   if (access && micro) {
-    const clearance = access.idMm - micro.proxOdMm;
+    const clearance = (access.idMm || access.shaftOdMm || 0) - micro.proxOdMm;
     const cls = compatClass(clearance);
     const lbl = compatLabel(clearance);
     const sign = clearance >= 0 ? '+' : '';
@@ -490,10 +633,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initialise
   populateSelects();
-  renderAccessTable();
-  renderMicroTable();
-  renderDacTable();
-  renderThrombectomyTable();
+  renderAllCategories(); // Dynamic render instead of static functions
   updateFastView();
 });
 
