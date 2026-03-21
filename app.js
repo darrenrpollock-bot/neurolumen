@@ -69,7 +69,7 @@ function populateSelects() {
       list.forEach(c => {
         const opt = document.createElement('option');
         opt.value = `${key}:${c.name}`;
-        opt.textContent = `${c.name}  ·  OD ${c.proxOdMm.toFixed(2)} mm`;
+        opt.textContent = `${c.name}  ·  OD ${(c.proxOdMm ?? 0).toFixed(2)} mm`;
         grp.appendChild(opt);
       });
       el.appendChild(grp);
