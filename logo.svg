@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="160" height="40" viewBox="0 0 160 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <text x="10" y="30" font-family="Arial, sans-serif" font-weight="bold" font-size="24" fill="#3B82F6">CathHub</text>
+  <path d="M140 20C140 16.13 136.86 13 133 13C129.13 13 126 16.13 126 20C126 23.87 129.13 27 133 27C136.86 27 140 23.87 140 20Z" stroke="#3B82F6" stroke-width="2"/>
+  <path d="M146 20C146 23.31 143.31 26 140 26C136.69 26 134 23.31 134 20C134 16.69 136.69 14 140 14C143.31 14 146 16.69 146 20Z" stroke="#34D399" stroke-width="1.5"/>
+</svg>
